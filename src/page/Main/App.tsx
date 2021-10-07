@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {NormalChannelInfo, TalkChannel} from "node-kakao";
+import {NormalChannelInfo} from "node-kakao";
 import {Comment, List} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
@@ -46,6 +46,7 @@ type Chat = {
 
 function App () {
     const [users, setUsers] = useState<Channel[]>([]);
+    const [profile, setProfile] = useState<Long>();
     const [chats, setChats] = useState<Chat[]>([]);
     const [channel, setChannel] = useState<Long>();
     const location = useLocation<Record<string, unknown>>();
@@ -53,11 +54,13 @@ function App () {
 
     useEffect(() => {
         ipcRenderer.send('ChannelList');
+        ipcRenderer.send('GetMyProfile');
     }, []);
 
     useEffect(() => {}, [chats]);
 
     ipcRenderer.removeAllListeners('NewChat');
+    ipcRenderer.removeAllListeners('GetMyProfile');
 
     ipcRenderer.on('ChannelResponse', (event, argument) => {
         setUsers(argument);
@@ -65,6 +68,10 @@ function App () {
 
     ipcRenderer.on('NewChat', (event, argument) => {
         setChats([...chats, argument]);
+    });
+
+    ipcRenderer.on('GetMyProfile', (event, argument) => {
+        setProfile(argument);
     });
 
     const onClick = () => {
@@ -94,16 +101,30 @@ function App () {
                 <Comment.Group>
                     {
                         chats.map((elem: Chat) => {
-                            return(
-                                <ChatWrapper>
-                                    <MyComment>
-                                        <Comment.Content>
-                                            <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                            <Comment.Text>{elem.data}</Comment.Text>
-                                        </Comment.Content>
-                                    </MyComment>
-                                </ChatWrapper>
-                            )
+                            if (elem.senderInfo.senderId === profile) {
+                                return (
+                                    <ChatWrapper>
+                                        <MyComment>
+                                            <Comment.Content>
+                                                <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                <Comment.Text>{elem.data}</Comment.Text>
+                                            </Comment.Content>
+                                        </MyComment>
+                                    </ChatWrapper>
+                                )
+                            } else {
+                                return (
+                                    <ChatWrapper>
+                                        <Comment>
+                                            <Comment.Avatar src={elem.senderInfo.profileURL} />
+                                            <Comment.Content>
+                                                <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                <Comment.Text>{elem.data}</Comment.Text>
+                                            </Comment.Content>
+                                        </Comment>
+                                    </ChatWrapper>
+                                )
+                            }
                         })
                     }
                 </Comment.Group>

@@ -5,6 +5,7 @@ import { FriendList } from '../src/action/Friends';
 import { ChannelList } from '../src/action/Room';
 
 import API from "../src/action/api";
+import {GetMyProfile} from "../src/action/information";
 
 let mainWindow: BrowserWindow;
 const CLIENT = API.getClient();
@@ -18,9 +19,14 @@ CLIENT.on('chat', (data, channel) => {
 
     console.log(`${sender.nickname}: ${data.text}`);
 
-    channel.chatListStore.last().then(value => {
-        console.log(value);
-    })
+    const test = channel.chatListStore.all();
+    const func = async () => {
+        for await (const result of test) {
+            console.log(result);
+        }
+    }
+
+    func().then()
 
 
     mainWindow.webContents.send('NewChat', {
@@ -56,6 +62,6 @@ app.whenReady().then(() => {
 
     ipcMain.on('Login', RegisterDevice);
     ipcMain.on('Register', Passcode);
-    ipcMain.on('FriendList', FriendList);
     ipcMain.on('ChannelList', ChannelList);
+    ipcMain.on('GetMyProfile', GetMyProfile);
 });
