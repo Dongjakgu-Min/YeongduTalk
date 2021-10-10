@@ -4,6 +4,10 @@ import {Comment, List} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
+import {ChannelInfo} from "../../types/Channel";
+
+import { ChatStruct, ChannelStruct } from '../../types/Message';
+import {getChatList} from "../../action/Room";
 
 const ChannelList = styled.div`
     width: 40%;
@@ -29,25 +33,10 @@ const ChatWrapper = styled.div`
 const electron = window.require('electron');
 const { ipcRenderer } = electron;
 
-type Channel = {
-    name: string,
-    info: NormalChannelInfo
-};
-
-type Chat = {
-    id: Long,
-    senderInfo: {
-        senderId: Long,
-        name: string,
-        profileURL: string,
-    }
-    data: string
-}
-
 function App () {
-    const [users, setUsers] = useState<Channel[]>([]);
+    const [users, setUsers] = useState<ChannelStruct[]>([]);
     const [profile, setProfile] = useState<Long>();
-    const [chats, setChats] = useState<Chat[]>([]);
+    const [chats, setChats] = useState<ChatStruct[]>([]);
     const [channel, setChannel] = useState<Long>();
     const location = useLocation<Record<string, unknown>>();
     const { userId } = location.state;
@@ -59,35 +48,38 @@ function App () {
 
     useEffect(() => {}, [chats]);
 
+    useEffect(() => {
+        ipcRenderer.send('GetChatList', { channelId: channel });
+    }, [channel]);
+
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
+    ipcRenderer.removeAllListeners('GetChatList');
 
     ipcRenderer.on('ChannelResponse', (event, argument) => {
         setUsers(argument);
     });
 
-    ipcRenderer.on('NewChat', (event, argument) => {
-        setChats([...chats, argument]);
+    ipcRenderer.on('NewChat', (event, argument: ChatStruct) => {
+        if (argument.channelId === channel) {
+            setChats([...chats, argument]);
+        }
+    });
+
+    ipcRenderer.on('GetChatListResult', (event, argument: ChatStruct[]) => {
+        setChats(argument);
     });
 
     ipcRenderer.on('GetMyProfile', (event, argument) => {
         setProfile(argument);
     });
 
-    const onClick = () => {
-        ipcRenderer.send('FriendList');
-    }
-
-    const getChannel = () => {
-        ipcRenderer.send('ChannelList');
-    }
-
     return (
         <Wrapper>
             <ChannelList>
                 <List divided relaxed>
                     {
-                        users.map((elem: Channel) => {
+                        users.map((elem: ChannelStruct) => {
                             return (
                                 <List.Item onClick={() => setChannel(elem.info.channelId)}>
                                     <List.Header>{elem.name}</List.Header>
@@ -100,15 +92,15 @@ function App () {
             <Chatting>
                 <Comment.Group>
                     {
-                        chats.map((elem: Chat) => {
-                            if (elem.senderInfo.senderId === profile) {
+                        chats.map((elem: ChatStruct) => {
+                            if (elem.senderInfo.isMine) {
                                 return (
                                     <ChatWrapper>
                                         <MyComment>
-                                            <Comment.Content>
+                                            <MyComment.Content>
                                                 <Comment.Author>{elem.senderInfo.name}</Comment.Author>
                                                 <Comment.Text>{elem.data}</Comment.Text>
-                                            </Comment.Content>
+                                            </MyComment.Content>
                                         </MyComment>
                                     </ChatWrapper>
                                 )
