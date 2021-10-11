@@ -11,15 +11,20 @@ import {getChatList} from "../../action/Room";
 
 const ChannelList = styled.div`
     width: 40%;
+  overflow: scroll;
 `;
 
 const Chatting = styled.div`
     width: 60%;
+  height: 100%;
+  overflow: scroll;
 `;
 
 const Wrapper = styled.div`
   width: 100%;
+  height: 100%;
   display: flex;
+  position: fixed;
 `;
 
 const MyComment = styled(Comment)`
@@ -55,13 +60,16 @@ function App () {
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
     ipcRenderer.removeAllListeners('GetChatList');
+    ipcRenderer.removeAllListeners('ChannelResponse');
+    ipcRenderer.removeAllListeners('GetChatListResult');
 
     ipcRenderer.on('ChannelResponse', (event, argument) => {
         setUsers(argument);
     });
 
     ipcRenderer.on('NewChat', (event, argument: ChatStruct) => {
-        if (argument.channelId === channel) {
+        if (channel?.equals(argument.channelId)) {
+            console.log(argument);
             setChats([...chats, argument]);
         }
     });
@@ -108,7 +116,12 @@ function App () {
                                 return (
                                     <ChatWrapper>
                                         <Comment>
-                                            <Comment.Avatar src={elem.senderInfo.profileURL} />
+                                            {
+                                                elem.senderInfo.profileURL !== ''?
+                                                <Comment.Avatar src={elem.senderInfo.profileURL} /> :
+                                                <Comment.Avatar src='img/user.png' />
+                                            }
+
                                             <Comment.Content>
                                                 <Comment.Author>{elem.senderInfo.name}</Comment.Author>
                                                 <Comment.Text>{elem.data}</Comment.Text>

@@ -20,14 +20,6 @@ CLIENT.on('chat', async (data, channel) => {
 
     console.log(`${sender.nickname}: ${data.text}`);
 
-    for await (let i of channel.syncChatList(data.chat.logId)) {
-        if (i.success) {
-            for (let chat of i.result) {
-                console.log(chat.sender)
-            }
-        }
-    }
-
     console.log(channel.chatListStore.last());
 
     const app = await API.getApp();
