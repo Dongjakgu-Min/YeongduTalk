@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {NormalChannelInfo} from "node-kakao";
-import {Comment, List} from 'semantic-ui-react';
+import {Comment, Input, List, Button, Form, TextArea} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
 import {ChannelInfo} from "../../types/Channel";
 
-import { ChatStruct, ChannelStruct } from '../../types/Message';
+import {ChatStruct, ChannelStruct} from '../../types/Message';
 import {getChatList} from "../../action/Room";
+import noProfile from '/public/img/user.png';
 
 const ChannelList = styled.div`
-    width: 40%;
+  width: 40%;
   overflow: scroll;
+  overflow-x: hidden;
 `;
 
 const Chatting = styled.div`
-    width: 60%;
+  width: 60%;
   height: 100%;
-  overflow: scroll;
 `;
 
 const Wrapper = styled.div`
@@ -32,29 +33,53 @@ const MyComment = styled(Comment)`
 `;
 
 const ChatWrapper = styled.div`
-    width: 100%;
+  width: 100%;
+`;
+
+const ChattingWindow = styled.div`
+  overflow: scroll;
+  height: calc(100% - 100px);
+  overflow-x: hidden;
+`;
+
+const InputArea = styled.div`
+  width: 100%;
+  height: 100px;
+  display: flex;
+  border: black;
+`
+
+const InputForm = styled(TextArea)`
+  width: calc(100% - 50px);
+  height: 100%;
+`;
+
+const SendButton = styled(Button)`
+  width: 100px;
+  height: 100%;
 `;
 
 const electron = window.require('electron');
-const { ipcRenderer } = electron;
+const {ipcRenderer} = electron;
 
-function App () {
+function App() {
     const [users, setUsers] = useState<ChannelStruct[]>([]);
     const [profile, setProfile] = useState<Long>();
     const [chats, setChats] = useState<ChatStruct[]>([]);
     const [channel, setChannel] = useState<Long>();
     const location = useLocation<Record<string, unknown>>();
-    const { userId } = location.state;
+    const {userId} = location.state;
 
     useEffect(() => {
         ipcRenderer.send('ChannelList');
         ipcRenderer.send('GetMyProfile');
     }, []);
 
-    useEffect(() => {}, [chats]);
+    useEffect(() => {
+    }, [chats]);
 
     useEffect(() => {
-        ipcRenderer.send('GetChatList', { channelId: channel });
+        ipcRenderer.send('GetChatList', {channelId: channel});
     }, [channel]);
 
     ipcRenderer.removeAllListeners('NewChat');
@@ -68,7 +93,7 @@ function App () {
     });
 
     ipcRenderer.on('NewChat', (event, argument: ChatStruct) => {
-        if (channel?.equals(argument.channelId)) {
+        if (channel !== undefined && channel.equals(argument.channelId)) {
             console.log(argument);
             setChats([...chats, argument]);
         }
@@ -81,6 +106,10 @@ function App () {
     ipcRenderer.on('GetMyProfile', (event, argument) => {
         setProfile(argument);
     });
+
+    const sendMessage = () => {
+
+    }
 
     return (
         <Wrapper>
@@ -98,41 +127,47 @@ function App () {
                 </List>
             </ChannelList>
             <Chatting>
-                <Comment.Group>
-                    {
-                        chats.map((elem: ChatStruct) => {
-                            if (elem.senderInfo.isMine) {
-                                return (
-                                    <ChatWrapper>
-                                        <MyComment>
-                                            <MyComment.Content>
-                                                <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                <Comment.Text>{elem.data}</Comment.Text>
-                                            </MyComment.Content>
-                                        </MyComment>
-                                    </ChatWrapper>
-                                )
-                            } else {
-                                return (
-                                    <ChatWrapper>
-                                        <Comment>
-                                            {
-                                                elem.senderInfo.profileURL !== ''?
-                                                <Comment.Avatar src={elem.senderInfo.profileURL} /> :
-                                                <Comment.Avatar src='img/user.png' />
-                                            }
+                <ChattingWindow>
+                    <Comment.Group>
+                        {
+                            chats.map((elem: ChatStruct) => {
+                                if (elem.senderInfo.isMine) {
+                                    return (
+                                        <ChatWrapper>
+                                            <MyComment>
+                                                <MyComment.Content>
+                                                    <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                </MyComment.Content>
+                                            </MyComment>
+                                        </ChatWrapper>
+                                    )
+                                } else {
+                                    return (
+                                        <ChatWrapper>
+                                            <Comment>
+                                                {
+                                                    elem.senderInfo.profileURL !== '' ?
+                                                        <Comment.Avatar src={elem.senderInfo.profileURL}/> :
+                                                        <Comment.Avatar src={noProfile}/>
+                                                }
 
-                                            <Comment.Content>
-                                                <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                <Comment.Text>{elem.data}</Comment.Text>
-                                            </Comment.Content>
-                                        </Comment>
-                                    </ChatWrapper>
-                                )
-                            }
-                        })
-                    }
-                </Comment.Group>
+                                                <Comment.Content>
+                                                    <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                </Comment.Content>
+                                            </Comment>
+                                        </ChatWrapper>
+                                    )
+                                }
+                            })
+                        }
+                    </Comment.Group>
+                </ChattingWindow>
+                <InputArea>
+                    <InputForm />
+                    <SendButton>전송</SendButton>
+                </InputArea>
             </Chatting>
         </Wrapper>
     )
