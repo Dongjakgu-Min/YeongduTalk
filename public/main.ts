@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, WebContents } from 'electron';
 import { TalkNormalChannel } from 'node-kakao';
 import {RegisterDevice, Passcode} from "../src/action/deviceRegister";
 import { FriendList } from '../src/action/Friends';
-import { ChannelList, getChatList } from '../src/action/Room';
+import {ChannelList, getChatList, sendMessage} from '../src/action/Room';
 
 import API from "../src/action/api";
 import {GetMyProfile} from "../src/action/information";
@@ -24,7 +24,7 @@ CLIENT.on('chat', async (data, channel) => {
 
     const app = await API.getApp();
 
-    await mainWindow.webContents.send('NewChat', {
+    mainWindow.webContents.send('NewChat', {
         channelId: channel.channelId,
         senderInfo: {
             senderId: sender.userId,
@@ -61,4 +61,5 @@ app.whenReady().then(() => {
     ipcMain.on('ChannelList', ChannelList);
     ipcMain.on('GetMyProfile', GetMyProfile);
     ipcMain.on('GetChatList', getChatList);
+    ipcMain.on('SendMessage', sendMessage);
 });

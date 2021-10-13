@@ -1,5 +1,5 @@
 import API from "./api";
-import { ChannelInfo, Chatlog, NormalChannelInfo, TalkChannel, TalkChatData } from 'node-kakao';
+import { ChannelInfo, Chatlog, NormalChannelInfo, TalkChannel, TalkChatData, Chat } from 'node-kakao';
 import { ChannelStruct, ChatStruct } from "../types/Message";
 
 const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
@@ -58,4 +58,18 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
     event.reply('GetChatListResult', log);
 };
 
-export { ChannelList, getChatList };
+const sendMessage = async (event: Electron.IpcMainEvent, payload: any) => {
+    const CLIENT = await API.getClient();
+    const ChannelList = CLIENT.channelList;
+    let channel: TalkChannel | undefined = undefined;
+
+    for await (let item of ChannelList.normal.all()) {
+        if (item.channelId.equals(payload.channelId)) {
+            channel = item;
+        }
+    }
+
+    channel?.sendChat(payload.message);
+}
+
+export { ChannelList, getChatList, sendMessage };

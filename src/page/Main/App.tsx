@@ -66,7 +66,8 @@ function App() {
     const [users, setUsers] = useState<ChannelStruct[]>([]);
     const [profile, setProfile] = useState<Long>();
     const [chats, setChats] = useState<ChatStruct[]>([]);
-    const [channel, setChannel] = useState<Long>();
+    const [message, setMessage] = useState<string>();
+    const [channelId, setChannelId] = useState<Long>();
     const location = useLocation<Record<string, unknown>>();
     const {userId} = location.state;
 
@@ -79,8 +80,8 @@ function App() {
     }, [chats]);
 
     useEffect(() => {
-        ipcRenderer.send('GetChatList', {channelId: channel});
-    }, [channel]);
+        ipcRenderer.send('GetChatList', { channelId });
+    }, [channelId]);
 
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
@@ -92,9 +93,10 @@ function App() {
         setUsers(argument);
     });
 
-    ipcRenderer.on('NewChat', (event, argument: ChatStruct) => {
-        if (channel !== undefined && channel.equals(argument.channelId)) {
-            console.log(argument);
+    ipcRenderer.on('NewChat', (event, argument) => {
+        console.log(JSON.stringify(channelId) == JSON.stringify(argument.channelId));
+        console.log(JSON.stringify(channelId) === JSON.stringify(argument.channelId));
+        if (JSON.stringify(channelId) === JSON.stringify(argument.channelId)) {
             setChats([...chats, argument]);
         }
     });
@@ -108,8 +110,13 @@ function App() {
     });
 
     const sendMessage = () => {
+        ipcRenderer.send('SendMessage', { channelId: channelId, message });
 
     }
+
+    const onMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setMessage(e.target.value);
+    };
 
     return (
         <Wrapper>
@@ -118,7 +125,7 @@ function App() {
                     {
                         users.map((elem: ChannelStruct) => {
                             return (
-                                <List.Item onClick={() => setChannel(elem.info.channelId)}>
+                                <List.Item onClick={() => setChannelId(elem.info.channelId)}>
                                     <List.Header>{elem.name}</List.Header>
                                 </List.Item>
                             )
@@ -165,8 +172,8 @@ function App() {
                     </Comment.Group>
                 </ChattingWindow>
                 <InputArea>
-                    <InputForm />
-                    <SendButton>전송</SendButton>
+                    <InputForm onChange={onMessageChange} value={message}/>
+                    <SendButton onClick={() => sendMessage()}>전송</SendButton>
                 </InputArea>
             </Chatting>
         </Wrapper>
