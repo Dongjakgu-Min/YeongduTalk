@@ -14,7 +14,8 @@ type ChatStruct = {
         profileURL: string,
         isMine: boolean
     }
-    data: string
+    data: string,
+    emoticonImg?: string,
 }
 
 type MyProfileStruct = {

@@ -6,7 +6,7 @@ import {ChannelList, getChatList, sendMessage} from '../src/action/Room';
 
 import API from "../src/action/api";
 import {GetMyProfile} from "../src/action/information";
-import {Long} from "bson";
+import { getEmoticonImageURL, getEmoticonThumbnailURL } from '../src/util/util';
 
 let mainWindow: BrowserWindow;
 const CLIENT = API.getClient();
@@ -14,11 +14,19 @@ let counter = 0;
 
 CLIENT.on('chat', async (data, channel) => {
     const sender = await data.getSenderInfo(channel);
+    let emoticonImg = undefined;
     if (!sender) return;
 
     const app = await API.getApp();
 
-    console.log(data.attachment());
+    console.log(data.chat);
+    console.log(data.chat.attachment);
+
+    if (data.chat.type === 20) {
+        const emoticon = data.chat.attachment?.path;
+        emoticonImg = getEmoticonThumbnailURL(emoticon as string);
+    } else if (data.chat.type === 12)
+        emoticonImg = getEmoticonImageURL(data.chat.attachment?.path as string);
 
     mainWindow.webContents.send('NewChat', {
         channelId: channel.channelId,
@@ -28,7 +36,8 @@ CLIENT.on('chat', async (data, channel) => {
             profileURL: sender.profileURL,
             isMine: app.result?.userId.equals(sender.userId)
         },
-        data: data.text
+        data: data.text,
+        emoticonImg
     });
 });
 

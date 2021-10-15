@@ -59,6 +59,11 @@ const SendButton = styled(Button)`
   height: 100%;
 `;
 
+const Emoticon = styled.img`
+    width: 100px;
+    height: 100px;
+`;
+
 const electron = window.require('electron');
 const {ipcRenderer} = electron;
 
@@ -86,6 +91,7 @@ function App() {
 
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
+    ipcRenderer.removeAllListeners('GetMyProfileResult');
     ipcRenderer.removeAllListeners('GetChatList');
     ipcRenderer.removeAllListeners('ChannelResponse');
     ipcRenderer.removeAllListeners('GetChatListResult');
@@ -104,6 +110,9 @@ function App() {
         });
 
         if (!isExist) ipcRenderer.send('ChannelList');
+
+        console.log(argument.data);
+        console.log(argument.emoticonImg);
 
         if (JSON.stringify(channelId) === JSON.stringify(argument.channelId)) {
             setChats([...chats, argument]);
@@ -131,6 +140,7 @@ function App() {
             data: message
         }
 
+        setMessage('');
         setChats([...chats, newChat as ChatStruct])
     }
 
@@ -168,7 +178,11 @@ function App() {
                                             <MyComment>
                                                 <MyComment.Content>
                                                     <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                    {
+                                                        elem.emoticonImg ?
+                                                            <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                            <Comment.Text>{elem.data}</Comment.Text>
+                                                    }
                                                 </MyComment.Content>
                                             </MyComment>
                                         </ChatWrapper>
@@ -185,7 +199,11 @@ function App() {
 
                                                 <Comment.Content>
                                                     <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                    {
+                                                        elem.emoticonImg ?
+                                                            <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                            <Comment.Text>{elem.data}</Comment.Text>
+                                                    }
                                                 </Comment.Content>
                                             </Comment>
                                         </ChatWrapper>

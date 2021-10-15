@@ -1,6 +1,7 @@
 import API from "./api";
 import { ChannelInfo, TalkChannel, TalkChatData, Chat, EmoticonAttachment } from 'node-kakao';
 import { ChannelStruct, ChatStruct } from "../types/Message";
+import {getEmoticonImageURL, getEmoticonThumbnailURL} from "../util/util";
 
 const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
     const CLIENT = await API.getClient();
@@ -38,6 +39,12 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
         if (item.success) {
             for (let chat of item.result) {
                 const userInfo = channel.getUserInfo(chat.sender);
+                let emoticonImg = undefined;
+
+                if (chat.type === 20)
+                    emoticonImg = getEmoticonThumbnailURL(chat.attachment?.path as string)
+                else if (chat.type === 12)
+                    emoticonImg = getEmoticonImageURL(chat.attachment?.path as string);
 
                 log.push({
                     channelId: channel.channelId,
@@ -47,7 +54,8 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
                         profileURL: userInfo!.profileURL,
                         isMine: CLIENT.clientUser.userId.equals(userInfo!.userId)
                     },
-                    data: chat.text as string
+                    data: chat.text as string,
+                    emoticonImg
                 });
             }
         }
