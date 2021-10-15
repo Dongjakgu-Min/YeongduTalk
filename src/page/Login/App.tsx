@@ -15,7 +15,7 @@ const App = () => {
         setInfo({
             ...info,
             [e.target.name]: e.target.value
-        })
+        });
     }
 
     function send() {
@@ -25,7 +25,7 @@ const App = () => {
             else alert('Login Failed');
         });
         ipcRenderer.on('AlreadyLogin', (event, argument) => {
-            history.push({ pathname: '/main', state: { userId: argument.userId } });
+            history.push({ pathname: '/main', state: { userId: argument.userId, username: argument.name } });
         })
     }
 

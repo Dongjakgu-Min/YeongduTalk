@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {NormalChannelInfo} from "node-kakao";
 import {Comment, Input, List, Button, Form, TextArea} from 'semantic-ui-react';
 import styled from "styled-components";
@@ -6,7 +6,7 @@ import {Long} from "bson";
 import {useLocation} from "react-router-dom";
 import {ChannelInfo} from "../../types/Channel";
 
-import {ChatStruct, ChannelStruct} from '../../types/Message';
+import {ChatStruct, ChannelStruct, MyProfileStruct} from '../../types/Message';
 import {getChatList} from "../../action/Room";
 import noProfile from '/public/img/user.png';
 
@@ -64,12 +64,12 @@ const {ipcRenderer} = electron;
 
 function App() {
     const [users, setUsers] = useState<ChannelStruct[]>([]);
-    const [profile, setProfile] = useState<Long>();
     const [chats, setChats] = useState<ChatStruct[]>([]);
     const [message, setMessage] = useState<string>();
     const [channelId, setChannelId] = useState<Long>();
+    const [profile, setProfile] = useState<MyProfileStruct>()
     const location = useLocation<Record<string, unknown>>();
-    const {userId} = location.state;
+    const chatEndRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         ipcRenderer.send('ChannelList');
@@ -81,6 +81,7 @@ function App() {
 
     useEffect(() => {
         ipcRenderer.send('GetChatList', { channelId });
+        scrollToBottom();
     }, [channelId]);
 
     ipcRenderer.removeAllListeners('NewChat');
@@ -94,8 +95,16 @@ function App() {
     });
 
     ipcRenderer.on('NewChat', (event, argument) => {
-        console.log(JSON.stringify(channelId) == JSON.stringify(argument.channelId));
-        console.log(JSON.stringify(channelId) === JSON.stringify(argument.channelId));
+        const localChannelId = JSON.stringify(channelId);
+        const receivedChannelId = JSON.stringify(argument.channelId);
+        let isExist = false;
+
+        users.some(elem => {
+            if (localChannelId === JSON.stringify(elem.info.channelId)) return true;
+        });
+
+        if (!isExist) ipcRenderer.send('ChannelList');
+
         if (JSON.stringify(channelId) === JSON.stringify(argument.channelId)) {
             setChats([...chats, argument]);
         }
@@ -105,18 +114,33 @@ function App() {
         setChats(argument);
     });
 
-    ipcRenderer.on('GetMyProfile', (event, argument) => {
+    ipcRenderer.on('GetMyProfileResult', (event, argument: MyProfileStruct) => {
         setProfile(argument);
-    });
+    })
 
     const sendMessage = () => {
-        ipcRenderer.send('SendMessage', { channelId: channelId, message });
+        ipcRenderer.send('SendMessage', { channelId, message });
+        const newChat = {
+            channelId,
+            senderInfo: {
+                senderId: profile?.userId,
+                name: profile?.username,
+                profileURL: '',
+                isMine: true
+            },
+            data: message
+        }
 
+        setChats([...chats, newChat as ChatStruct])
     }
 
     const onMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
     };
+
+    const scrollToBottom = () => {
+        if (chatEndRef.current != null) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
 
     return (
         <Wrapper>
@@ -134,7 +158,7 @@ function App() {
                 </List>
             </ChannelList>
             <Chatting>
-                <ChattingWindow>
+                <ChattingWindow ref={chatEndRef}>
                     <Comment.Group>
                         {
                             chats.map((elem: ChatStruct) => {

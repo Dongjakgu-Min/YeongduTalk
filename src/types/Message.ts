@@ -17,4 +17,9 @@ type ChatStruct = {
     data: string
 }
 
-export type { ChannelStruct, ChatStruct }
+type MyProfileStruct = {
+    userId: Long,
+    username: string
+}
+
+export type { ChannelStruct, ChatStruct, MyProfileStruct }

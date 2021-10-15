@@ -16,13 +16,9 @@ CLIENT.on('chat', async (data, channel) => {
     const sender = await data.getSenderInfo(channel);
     if (!sender) return;
 
-    console.log(sender);
-
-    console.log(`${sender.nickname}: ${data.text}`);
-
-    console.log(channel.chatListStore.last());
-
     const app = await API.getApp();
+
+    console.log(data.attachment());
 
     mainWindow.webContents.send('NewChat', {
         channelId: channel.channelId,

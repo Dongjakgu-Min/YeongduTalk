@@ -22,4 +22,4 @@ interface LoginData extends OAuthCredential {
     mainDeviceAppVersion: string;
 }
 
-export type { LoginData }
+export type { OAuthCredential, LoginData }

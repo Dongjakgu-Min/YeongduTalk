@@ -12,7 +12,7 @@ const RegisterDevice = async (event: Electron.IpcMainEvent, payload: any) => {
     const loginRes = await API.getApp();
 
     if (loginRes.success) {
-        return event.reply('AlreadyLogin', { userId: loginRes.result?.userId });
+        return event.reply('AlreadyLogin', { userId: loginRes.result?.userId, name: api.name });
     }
     if (loginRes.status !== KnownAuthStatusCode.DEVICE_NOT_REGISTERED) {
         throw new Error(`Web login failed with status: ${loginRes.status}`);

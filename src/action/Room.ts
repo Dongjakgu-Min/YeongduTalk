@@ -1,5 +1,5 @@
 import API from "./api";
-import { ChannelInfo, Chatlog, NormalChannelInfo, TalkChannel, TalkChatData, Chat } from 'node-kakao';
+import { ChannelInfo, TalkChannel, TalkChatData, Chat, EmoticonAttachment } from 'node-kakao';
 import { ChannelStruct, ChatStruct } from "../types/Message";
 
 const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
@@ -7,13 +7,11 @@ const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
     const ChannelList = CLIENT.channelList;
     const result: ChannelStruct[] = [];
 
-    for await (let item of Array.from(ChannelList.all())) {
-        if (item.getDisplayName().length !== 0) {
-            result.push({
-                name: item.getDisplayName(),
-                info: item.info as ChannelInfo
-            });
-        }
+    for await (let item of ChannelList.all()) {
+        result.push({
+            name: item.getDisplayName() === '' ? '자신과의 채팅' : item.getDisplayName(),
+            info: item.info as ChannelInfo
+        });
     }
 
     console.log(`Rooms : ${CLIENT.channelList.size}`)
@@ -50,7 +48,7 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
                         isMine: CLIENT.clientUser.userId.equals(userInfo!.userId)
                     },
                     data: chat.text as string
-                })
+                });
             }
         }
     }
