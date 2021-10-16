@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {NormalChannelInfo} from "node-kakao";
-import {Comment, Input, List, Button, Form, TextArea} from 'semantic-ui-react';
+import {Comment, Input, List, Button, Form, TextArea, Icon} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
@@ -17,7 +17,7 @@ const ChannelList = styled.div`
 `;
 
 const Chatting = styled.div`
-  width: 60%;
+  width: 100%;
   height: 100%;
 `;
 
@@ -40,28 +40,39 @@ const ChattingWindow = styled.div`
   overflow: scroll;
   height: calc(100% - 100px);
   overflow-x: hidden;
+  width: 100%;
+  padding: 30px 30px 15px 30px;
 `;
 
 const InputArea = styled.div`
   width: 100%;
   height: 100px;
   display: flex;
-  border: black;
+  padding: 20px 20px 20px 20px;
 `
 
-const InputForm = styled(TextArea)`
-  width: calc(100% - 50px);
+const InputForm = styled(Form)`
+  width: 100%;
   height: 100%;
 `;
 
-const SendButton = styled(Button)`
-  width: 100px;
-  height: 100%;
+const InputFormTextArea = styled(Form.TextArea)`
+  width: 100%
+  //height: 100%;
+`;
+
+const SendButton = styled.div`
+  padding: 0 10px 0 10px;
+  width: 150px;
 `;
 
 const Emoticon = styled.img`
-    width: 100px;
-    height: 100px;
+    width: 130px;
+    height: 130px;
+`;
+
+const Image = styled.img`
+    width: 30%;
 `;
 
 const electron = window.require('electron');
@@ -144,6 +155,11 @@ function App() {
         setChats([...chats, newChat as ChatStruct])
     }
 
+    const sendMsgViaEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key == 'Enter')
+            sendMessage();
+    }
+
     const onMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
     };
@@ -181,7 +197,11 @@ function App() {
                                                     {
                                                         elem.emoticonImg ?
                                                             <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                            <Comment.Text>{elem.data}</Comment.Text>
+                                                            (
+                                                                elem.attachedImg ?
+                                                                    <Image src={elem.attachedImg} /> :
+                                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                            )
                                                     }
                                                 </MyComment.Content>
                                             </MyComment>
@@ -202,7 +222,11 @@ function App() {
                                                     {
                                                         elem.emoticonImg ?
                                                             <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                            <Comment.Text>{elem.data}</Comment.Text>
+                                                            (
+                                                                elem.attachedImg ?
+                                                                    <Image src={elem.attachedImg} /> :
+                                                                    <Comment.Text>{elem.data}</Comment.Text>
+                                                            )
                                                     }
                                                 </Comment.Content>
                                             </Comment>
@@ -214,8 +238,14 @@ function App() {
                     </Comment.Group>
                 </ChattingWindow>
                 <InputArea>
-                    <InputForm onChange={onMessageChange} value={message}/>
-                    <SendButton onClick={() => sendMessage()}>전송</SendButton>
+                    <InputForm onKeyPress={sendMsgViaEnter} onSubmit={() => sendMessage()}>
+                        <InputFormTextArea onChange={onMessageChange} value={message}/>
+                    </InputForm>
+                    <SendButton>
+                        <Button>제출</Button>
+                        <Button icon='world' />
+                        <Button icon='world' />
+                    </SendButton>
                 </InputArea>
             </Chatting>
         </Wrapper>

@@ -15,6 +15,7 @@ let counter = 0;
 CLIENT.on('chat', async (data, channel) => {
     const sender = await data.getSenderInfo(channel);
     let emoticonImg = undefined;
+    let attachedImg = undefined;
     if (!sender) return;
 
     const app = await API.getApp();
@@ -27,6 +28,8 @@ CLIENT.on('chat', async (data, channel) => {
         emoticonImg = getEmoticonThumbnailURL(emoticon as string);
     } else if (data.chat.type === 12)
         emoticonImg = getEmoticonImageURL(data.chat.attachment?.path as string);
+    else if (data.chat.type === 2)
+        attachedImg = data.chat.attachment?.url
 
     mainWindow.webContents.send('NewChat', {
         channelId: channel.channelId,
@@ -37,7 +40,8 @@ CLIENT.on('chat', async (data, channel) => {
             isMine: app.result?.userId.equals(sender.userId)
         },
         data: data.text,
-        emoticonImg
+        emoticonImg,
+        attachedImg
     });
 });
 

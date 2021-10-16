@@ -16,6 +16,7 @@ type ChatStruct = {
     }
     data: string,
     emoticonImg?: string,
+    attachedImg?: string
 }
 
 type MyProfileStruct = {

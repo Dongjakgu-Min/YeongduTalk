@@ -40,11 +40,14 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
             for (let chat of item.result) {
                 const userInfo = channel.getUserInfo(chat.sender);
                 let emoticonImg = undefined;
+                let attachedImg = undefined;
 
                 if (chat.type === 20)
                     emoticonImg = getEmoticonThumbnailURL(chat.attachment?.path as string)
                 else if (chat.type === 12)
                     emoticonImg = getEmoticonImageURL(chat.attachment?.path as string);
+                else if (chat.type === 2)
+                    attachedImg = chat.attachment?.url as string;
 
                 log.push({
                     channelId: channel.channelId,
@@ -55,7 +58,8 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
                         isMine: CLIENT.clientUser.userId.equals(userInfo!.userId)
                     },
                     data: chat.text as string,
-                    emoticonImg
+                    emoticonImg,
+                    attachedImg
                 });
             }
         }
