@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {NormalChannelInfo} from "node-kakao";
-import {Comment, Input, List, Button, Form, TextArea, Icon} from 'semantic-ui-react';
+import {Comment, Input, List, Button, Form, TextArea, Icon, Label} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
@@ -86,6 +86,7 @@ function App() {
     const [profile, setProfile] = useState<MyProfileStruct>()
     const location = useLocation<Record<string, unknown>>();
     const chatEndRef = useRef<HTMLInputElement>(null);
+    const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         ipcRenderer.send('ChannelList');
@@ -93,11 +94,11 @@ function App() {
     }, []);
 
     useEffect(() => {
+        chatEndRef.current?.scrollIntoView();
     }, [chats]);
 
     useEffect(() => {
         ipcRenderer.send('GetChatList', { channelId });
-        scrollToBottom();
     }, [channelId]);
 
     ipcRenderer.removeAllListeners('NewChat');
@@ -122,10 +123,7 @@ function App() {
 
         if (!isExist) ipcRenderer.send('ChannelList');
 
-        console.log(argument.data);
-        console.log(argument.emoticonImg);
-
-        if (JSON.stringify(channelId) === JSON.stringify(argument.channelId)) {
+        if (localChannelId === receivedChannelId) {
             setChats([...chats, argument]);
         }
     });
@@ -164,10 +162,6 @@ function App() {
         setMessage(e.target.value);
     };
 
-    const scrollToBottom = () => {
-        if (chatEndRef.current != null) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-
     return (
         <Wrapper>
             <ChannelList>
@@ -184,7 +178,7 @@ function App() {
                 </List>
             </ChannelList>
             <Chatting>
-                <ChattingWindow ref={chatEndRef}>
+                <ChattingWindow>
                     <Comment.Group>
                         {
                             chats.map((elem: ChatStruct) => {
@@ -235,6 +229,7 @@ function App() {
                                 }
                             })
                         }
+                        <div ref={chatEndRef} />
                     </Comment.Group>
                 </ChattingWindow>
                 <InputArea>
@@ -243,8 +238,9 @@ function App() {
                     </InputForm>
                     <SendButton>
                         <Button>제출</Button>
-                        <Button icon='world' />
-                        <Button icon='world' />
+                        <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
+                        <input ref={fileRef} type='file' style={{display: 'none'}} />
+                        <Button icon='star' />
                     </SendButton>
                 </InputArea>
             </Chatting>
