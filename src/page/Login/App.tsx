@@ -11,6 +11,9 @@ const App = () => {
         password: ''
     });
 
+    ipcRenderer.removeAllListeners('LoginResult');
+    ipcRenderer.removeAllListeners('AlreadyLogin');
+
     function onChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
         setInfo({
             ...info,
@@ -19,22 +22,23 @@ const App = () => {
     }
 
     function send() {
-        ipcRenderer.send('Login', info);
-        ipcRenderer.on('LoginResult', (event, argument) => {
-            if (argument.status === true) history.push({ pathname: '/code', state: { form: info } });
-            else alert('Login Failed');
-        });
-        ipcRenderer.on('AlreadyLogin', (event, argument) => {
-            history.push({ pathname: '/main', state: { userId: argument.userId, username: argument.name } });
-        })
+        console.log(info);
+        ipcRenderer.send('DeviceRegister', info);
     }
+
+    ipcRenderer.on('LoginResult', (event, argument) => {
+        if (argument.status === true) history.push({ pathname: '/code', state: { form: info } });
+        else alert('Login Failed')
+    });
+    ipcRenderer.on('AlreadyLogin', (event, argument) => {
+        if (!argument.code) history.push({ pathname: '/main', state: { userId: argument.userId, username: argument.name } });
+    });
 
     return (
         <div>
             <input name="email" onChange={onChangeInput} value={info.email} />
             <input name="password" type="password" onChange={onChangeInput} value={info.password}/>
             <Button onClick={() => send()}>전송</Button>
-            <Button>시발</Button>
         </div>
     )
 }

@@ -11,7 +11,11 @@ const RegisterDevice = async (event: Electron.IpcMainEvent, payload: any) => {
     await API.login(form);
     const loginRes = await API.getApp();
 
+    console.log('------TEST-----')
+    console.log(loginRes);
+
     if (loginRes.success) {
+        console.log('Login Success');
         return event.reply('AlreadyLogin', { userId: loginRes.result?.userId, name: api.name });
     }
     if (loginRes.status !== KnownAuthStatusCode.DEVICE_NOT_REGISTERED) {
@@ -35,6 +39,8 @@ const Passcode = async (event: Electron.IpcMainEvent, payload: any) => {
     const loginAfterRes = await api.login(payload.form);
     if (!loginAfterRes.success) throw new Error(`Web login failed with status: ${loginAfterRes.status}`);
     console.log(`Client logon successfully`);
+
+    await API.login(payload.form);
 
     event.reply('RegisterResult', { status: true });
 }

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, WebContents } from 'electron';
 import { TalkNormalChannel } from 'node-kakao';
-import {RegisterDevice, Passcode} from "../src/action/deviceRegister";
+import {RegisterDevice, Passcode, Login} from "../src/action/deviceRegister";
 import { FriendList } from '../src/action/Friends';
 import {ChannelList, getChatList, sendMessage} from '../src/action/Room';
 
@@ -65,7 +65,8 @@ app.whenReady().then(() => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
-    ipcMain.on('Login', RegisterDevice);
+    ipcMain.on('DeviceRegister', RegisterDevice);
+    ipcMain.on('Login', Login);
     ipcMain.on('Register', Passcode);
     ipcMain.on('ChannelList', ChannelList);
     ipcMain.on('GetMyProfile', GetMyProfile);

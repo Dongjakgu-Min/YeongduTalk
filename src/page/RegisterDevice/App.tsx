@@ -16,6 +16,7 @@ function App () {
         ipcRenderer.send('Register', { form: location.state.form, passcode })
         ipcRenderer.on('RegisterResult', (event, argument) => {
             if (!argument.status) alert('Register Failed');
+            else history.push('/main');
         });
     }
 
