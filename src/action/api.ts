@@ -1,16 +1,24 @@
 import {AsyncCommandResult, AuthApiClient, KnownAuthStatusCode, TalkClient, util} from 'node-kakao';
 import { LoginData } from '../util/type';
+import storage from 'electron-json-storage';
 
 export default class API {
     private static instance: AuthApiClient;
     private static CLIENT: TalkClient = new TalkClient();
-    private static app: { status: number, success: boolean, result?: LoginData}
+    private static app: { status: number, success: boolean, result?: LoginData};
 
-    private static UUID = process.env['deviceUUID'] as string;
-    private static NAME = process.env['deviceNAME'] as string;
+    private static Info: { UUID: string, NAME: string } = storage.getSync('info') as { UUID: string , NAME: string };
 
-    public static async login(form: { email: string, password: string }) {
-        if (!this.UUID) console.log(util.randomWin32DeviceUUID());
+    public static async login(form: { email: string, password: string, username?: string }) {
+        if (!this.Info.UUID) {
+            const data = await storage.getSync('info');
+            storage.set('info', {...data, UUID: util.randomWin32DeviceUUID()}, error => {})
+        }
+
+        if (form.username) {
+            const data = await storage.getSync('info');
+            storage.set('info', {...data, NAME: form.username}, error => {})
+        }
 
         if (this.app === undefined || !this.app.success) {
             this.app = await this.instance.login(form);
@@ -27,7 +35,7 @@ export default class API {
     }
 
     public static async getInstance() {
-        return this.instance || (this.instance = await AuthApiClient.create(this.NAME, this.UUID))
+        return this.instance || (this.instance = await AuthApiClient.create(this.Info.NAME, this.Info.UUID))
     }
 
     public static async getApp() {
@@ -36,5 +44,10 @@ export default class API {
 
     public static getClient() {
         return this.CLIENT;
+    }
+
+    public static async SyncAuthApiClient() {
+        this.Info = await storage.getSync('info') as { UUID: string , NAME: string };
+        this.instance = await AuthApiClient.create(this.Info.NAME, this.Info.UUID);
     }
 }

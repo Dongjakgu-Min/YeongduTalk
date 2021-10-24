@@ -7,23 +7,23 @@ const RegisterDevice = async (event: Electron.IpcMainEvent, payload: any) => {
         forced: true
     };
 
+    const check = await API.getApp();
+
     const api = await API.getInstance();
     await API.login(form);
     const loginRes = await API.getApp();
-
-    console.log('------TEST-----')
-    console.log(loginRes);
 
     if (loginRes.success) {
         console.log('Login Success');
         return event.reply('AlreadyLogin', { userId: loginRes.result?.userId, name: api.name });
     }
-    if (loginRes.status !== KnownAuthStatusCode.DEVICE_NOT_REGISTERED) {
+    if (loginRes.status === KnownAuthStatusCode.DEVICE_NOT_REGISTERED && check !== undefined) {
+        await API.SyncAuthApiClient();
+        const passcodeRes = await api.requestPasscode(form);
+        if (!passcodeRes.success) throw new Error(`Passcode request failed with status: ${passcodeRes.status}`);
+    } else if (loginRes.status !== KnownAuthStatusCode.DEVICE_NOT_REGISTERED) {
         throw new Error(`Web login failed with status: ${loginRes.status}`);
     }
-
-    const passcodeRes = await api.requestPasscode(form);
-    if (!passcodeRes.success) throw new Error(`Passcode request failed with status: ${passcodeRes.status}`);
 
     event.reply('LoginResult', { status: true, msg: payload });
 }

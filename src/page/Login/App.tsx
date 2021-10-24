@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button } from 'semantic-ui-react';
+import { Button, Segment, Input } from 'semantic-ui-react';
+import styled from 'styled-components';
 const electron = window.require('electron');
 const { ipcRenderer } = electron;
+
+const Main = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+`;
+
+
+const Form = styled.div`
+    margin: 50px 75px 50px 75px;
+`;
+
 
 const App = () => {
     const history = useHistory();
@@ -22,12 +36,11 @@ const App = () => {
     }
 
     function send() {
-        console.log(info);
         ipcRenderer.send('DeviceRegister', info);
     }
 
     ipcRenderer.on('LoginResult', (event, argument) => {
-        if (argument.status === true) history.push({ pathname: '/code', state: { form: info } });
+        if (argument.status === true) history.push({ pathname: '/device', state: { form: info } });
         else alert('Login Failed')
     });
     ipcRenderer.on('AlreadyLogin', (event, argument) => {
@@ -35,11 +48,16 @@ const App = () => {
     });
 
     return (
-        <div>
-            <input name="email" onChange={onChangeInput} value={info.email} />
-            <input name="password" type="password" onChange={onChangeInput} value={info.password}/>
-            <Button onClick={() => send()}>전송</Button>
-        </div>
+        <Main>
+            <Segment>
+                <Form>
+                    <h1>로그인</h1>
+                    <Input name="email" onChange={onChangeInput} value={info.email} /><br/>
+                    <Input name="password" type="password" onChange={onChangeInput} value={info.password}/><br/><br/>
+                    <Button onClick={() => send()}>전송</Button>
+                </Form>
+            </Segment>
+        </Main>
     )
 }
 

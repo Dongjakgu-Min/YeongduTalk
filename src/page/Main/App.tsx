@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {NormalChannelInfo} from "node-kakao";
-import {Comment, Input, List, Button, Form, TextArea, Icon, Label} from 'semantic-ui-react';
+import {Comment, Input, List, Button, Form, Segment, Rail} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
@@ -165,17 +165,17 @@ function App() {
     return (
         <Wrapper>
             <ChannelList>
-                <List divided relaxed>
-                    {
-                        users.map((elem: ChannelStruct) => {
-                            return (
-                                <List.Item onClick={() => setChannelId(elem.info.channelId)}>
-                                    <List.Header>{elem.name}</List.Header>
-                                </List.Item>
-                            )
-                        })
-                    }
-                </List>
+                    <List divided relaxed>
+                        {
+                            users.map((elem: ChannelStruct) => {
+                                return (
+                                    <List.Item onClick={() => setChannelId(elem.info.channelId)}>
+                                        <List.Header>{elem.name}</List.Header>
+                                    </List.Item>
+                                )
+                            })
+                        }
+                    </List>
             </ChannelList>
             <Chatting>
                 <ChattingWindow>
@@ -232,17 +232,19 @@ function App() {
                         <div ref={chatEndRef} />
                     </Comment.Group>
                 </ChattingWindow>
-                <InputArea>
-                    <InputForm onKeyPress={sendMsgViaEnter} onSubmit={() => sendMessage()}>
-                        <InputFormTextArea onChange={onMessageChange} value={message}/>
-                    </InputForm>
-                    <SendButton>
-                        <Button>제출</Button>
-                        <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
-                        <input ref={fileRef} type='file' style={{display: 'none'}} />
-                        <Button icon='star' />
-                    </SendButton>
-                </InputArea>
+
+                    <InputArea>
+                        <InputForm onKeyPress={sendMsgViaEnter} onSubmit={() => sendMessage()}>
+                            <InputFormTextArea onChange={onMessageChange} value={message}/>
+                        </InputForm>
+                        <SendButton>
+                            <Button>제출</Button>
+                            <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
+                            <input ref={fileRef} type='file' style={{display: 'none'}} />
+                            <Button icon='star' />
+                        </SendButton>
+                    </InputArea>
+
             </Chatting>
         </Wrapper>
     )
