@@ -83,6 +83,8 @@ function App() {
     const [chats, setChats] = useState<ChatStruct[]>([]);
     const [message, setMessage] = useState<string>();
     const [channelId, setChannelId] = useState<Long>();
+    const [attachmentPath, setAttachmentPath] = useState<File[]>([]);
+    const [test, setTest] = useState<string>();
     const [profile, setProfile] = useState<MyProfileStruct>()
     const location = useLocation<Record<string, unknown>>();
     const chatEndRef = useRef<HTMLInputElement>(null);
@@ -136,8 +138,8 @@ function App() {
         setProfile(argument);
     })
 
-    const sendMessage = () => {
-        ipcRenderer.send('SendMessage', { channelId, message });
+    const sendMessage = (filePath?: Record<string, unknown>) => {
+        ipcRenderer.send('SendMessage', { channelId, message, filePath });
         const newChat = {
             channelId,
             senderInfo: {
@@ -161,6 +163,18 @@ function App() {
     const onMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
     };
+
+    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTest('시발');
+        if (e.target.files) {
+            sendMessage({
+                filePath: e.target.files[0].path,
+                fileSize: e.target.files[0].size
+            });
+        } else {
+            alert('파일을 선택하지 않았습니다.');
+        }
+    }
 
     return (
         <Wrapper>
@@ -240,7 +254,7 @@ function App() {
                         <SendButton>
                             <Button>제출</Button>
                             <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
-                            <input ref={fileRef} type='file' style={{display: 'none'}} />
+                            <input ref={fileRef} type='file' style={{display: 'none'}} onChange={onFileChange} />
                             <Button icon='star' />
                         </SendButton>
                     </InputArea>

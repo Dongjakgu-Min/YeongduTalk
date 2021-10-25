@@ -1,7 +1,9 @@
 import API from "./api";
-import { ChannelInfo, TalkChannel, TalkChatData, Chat, EmoticonAttachment } from 'node-kakao';
-import { ChannelStruct, ChatStruct } from "../types/Message";
+import {AttachmentApi, ChannelInfo, ChatBuilder, FileAttachment, KnownChatType, TalkChannel} from 'node-kakao';
+import {ChannelStruct, ChatStruct} from "../types/Message";
 import {getEmoticonImageURL, getEmoticonThumbnailURL} from "../util/util";
+import {readFileSync} from "fs";
+import hasha from "hasha";
 
 const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
     const CLIENT = await API.getClient();
@@ -72,6 +74,7 @@ const sendMessage = async (event: Electron.IpcMainEvent, payload: any) => {
     const CLIENT = await API.getClient();
     const ChannelList = CLIENT.channelList;
     let channel: TalkChannel | undefined = undefined;
+    const { filePath, fileSize } = payload.filePath;
 
     for await (let item of ChannelList.normal.all()) {
         if (item.channelId.equals(payload.channelId)) {
@@ -79,7 +82,28 @@ const sendMessage = async (event: Electron.IpcMainEvent, payload: any) => {
         }
     }
 
-    channel?.sendChat(payload.message);
+    if (!filePath) channel?.sendChat(payload.message);
+    else {
+        const attachRes = await AttachmentApi.upload(KnownChatType.FILE, filePath, readFileSync(filePath));
+
+        if (!attachRes.success) return;
+
+        const filenameArray = filePath.split('/');
+
+        const fileAttach: FileAttachment = {
+            name: filenameArray[filenameArray.length - 1],
+            size: fileSize,
+            expire: 1000 * 3600 * 24 * 7,
+            cs: await hasha.fromFile(filePath, { algorithm: 'sha1' })
+        }
+
+        channel?.sendChat(
+            new ChatBuilder()
+                .attachment(attachRes.result)
+                .attachment(fileAttach)
+                .build(KnownChatType.FILE)
+        );
+    }
 }
 
 export { ChannelList, getChatList, sendMessage };
