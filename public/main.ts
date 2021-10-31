@@ -1,14 +1,12 @@
-import { app, BrowserWindow, ipcMain, WebContents, Tray, Menu } from 'electron';
-import storage from 'electron-json-storage';
-import { TalkNormalChannel } from 'node-kakao';
-import {RegisterDevice, Passcode, Login} from "../src/action/deviceRegister";
-import { FriendList } from '../src/action/Friends';
-import {ChannelList, getChatList, sendMessage} from '../src/action/Room';
+import {app, BrowserWindow, ipcMain, Menu, Tray} from 'electron';
+import {AttachmentApiClient, KnownChatType} from 'node-kakao';
+import {Login, Passcode, RegisterDevice} from "../src/action/deviceRegister";
+import {ChannelList, getChatList, sendMessage, receiveData} from '../src/action/Room';
 import * as path from 'path';
 
 import API from "../src/action/api";
 import {GetMyProfile} from "../src/action/information";
-import { getEmoticonImageURL, getEmoticonThumbnailURL } from '../src/util/util';
+import {getEmoticonImageURL, getEmoticonThumbnailURL} from '../src/util/util';
 
 let mainWindow: BrowserWindow;
 const CLIENT = API.getClient();
@@ -19,20 +17,24 @@ CLIENT.on('chat', async (data, channel) => {
     const sender = await data.getSenderInfo(channel);
     let emoticonImg = undefined;
     let attachedImg = undefined;
+    let attachedFile = undefined;
     if (!sender) return;
 
     const app = await API.getApp();
 
-    console.log(data.chat);
-    console.log(data.chat.attachment);
-
-    if (data.chat.type === 20) {
-        const emoticon = data.chat.attachment?.path;
-        emoticonImg = getEmoticonThumbnailURL(emoticon as string);
-    } else if (data.chat.type === 12)
-        emoticonImg = getEmoticonImageURL(data.chat.attachment?.path as string);
-    else if (data.chat.type === 2)
-        attachedImg = data.chat.attachment?.url
+    switch (data.chat.type) {
+        case KnownChatType.PHOTO: attachedImg = data.chat.attachment?.url; break;
+        case KnownChatType.STICKER: emoticonImg = getEmoticonImageURL(data.chat.attachment?.path as string); break;
+        case KnownChatType.STICKERANI:
+            const emoticon = data.chat.attachment?.path;
+            emoticonImg = getEmoticonThumbnailURL(emoticon as string);
+            break;
+        case KnownChatType.FILE:
+            attachedFile = data.chat.attachment?.url;
+            console.log(await channel.downloadMedia({ key: data.chat.attachment?.k as string }, KnownChatType.FILE));
+            break;
+        default: break;
+    }
 
     mainWindow.webContents.send('NewChat', {
         channelId: channel.channelId,
@@ -44,7 +46,8 @@ CLIENT.on('chat', async (data, channel) => {
         },
         data: data.text,
         emoticonImg,
-        attachedImg
+        attachedImg,
+        attachedFile
     });
 });
 
@@ -93,4 +96,5 @@ app.whenReady().then(() => {
     ipcMain.on('GetMyProfile', GetMyProfile);
     ipcMain.on('GetChatList', getChatList);
     ipcMain.on('SendMessage', sendMessage);
+    ipcMain.on('ReceiveData', receiveData);
 });

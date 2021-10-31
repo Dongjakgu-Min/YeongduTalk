@@ -1,14 +1,13 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {NormalChannelInfo} from "node-kakao";
 import {Comment, Input, List, Button, Form, Segment, Rail} from 'semantic-ui-react';
 import styled from "styled-components";
 import {Long} from "bson";
 import {useLocation} from "react-router-dom";
-import {ChannelInfo} from "../../types/Channel";
+import { saveAs } from 'file-saver';
 
 import {ChatStruct, ChannelStruct, MyProfileStruct} from '../../types/Message';
-import {getChatList} from "../../action/Room";
 import noProfile from '/public/img/user.png';
+import {bool} from "prop-types";
 
 const ChannelList = styled.div`
   width: 40%;
@@ -83,8 +82,7 @@ function App() {
     const [chats, setChats] = useState<ChatStruct[]>([]);
     const [message, setMessage] = useState<string>();
     const [channelId, setChannelId] = useState<Long>();
-    const [attachmentPath, setAttachmentPath] = useState<File[]>([]);
-    const [test, setTest] = useState<string>();
+    const [download, setDownload] = useState<Uint8Array>();
     const [profile, setProfile] = useState<MyProfileStruct>()
     const location = useLocation<Record<string, unknown>>();
     const chatEndRef = useRef<HTMLInputElement>(null);
@@ -103,12 +101,21 @@ function App() {
         ipcRenderer.send('GetChatList', { channelId });
     }, [channelId]);
 
+    useEffect(() => {
+        if (download) {
+            const blob = new Blob([download], { type: 'application/octet-stream' });
+            saveAs(blob, 'asdf');
+        }
+    }, [download]);
+
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
     ipcRenderer.removeAllListeners('GetMyProfileResult');
     ipcRenderer.removeAllListeners('GetChatList');
     ipcRenderer.removeAllListeners('ChannelResponse');
     ipcRenderer.removeAllListeners('GetChatListResult');
+    ipcRenderer.removeAllListeners('ReceiveData');
+    ipcRenderer.removeAllListeners('ReceiveDataResult');
 
     ipcRenderer.on('ChannelResponse', (event, argument) => {
         setUsers(argument);
@@ -138,6 +145,11 @@ function App() {
         setProfile(argument);
     })
 
+    // ipcRenderer.on('ReceiveDataResult', (event, argument: { buffer: Uint8Array, end: boolean, offset: number }) => {
+    //     // download?.data?.set(argument.buffer, argument.offset);
+    //     // if (download && download.isDone) setDownload({ ...download, isDone: argument.end })
+    // });
+
     const sendMessage = (filePath?: Record<string, unknown>) => {
         ipcRenderer.send('SendMessage', { channelId, message, filePath });
         const newChat = {
@@ -165,7 +177,6 @@ function App() {
     };
 
     const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setTest('시발');
         if (e.target.files) {
             sendMessage({
                 filePath: e.target.files[0].path,
@@ -174,6 +185,24 @@ function App() {
         } else {
             alert('파일을 선택하지 않았습니다.');
         }
+    }
+
+    const downloadFile = (type: number, key: string, size: number) => {
+        const buffer = new ArrayBuffer(size);
+        const data = new Uint8Array(buffer);
+
+        console.log(`size is ${size}, data size is ${data.length}`);
+        console.log(data);
+
+        ipcRenderer.on('ReceiveDataResult', (event, argument: { buffer: Uint8Array, end: boolean, offset: number }) => {
+            console.log(`offset is : ${argument.offset}`);
+            console.log(`buffer size is : ${argument.buffer.length}`)
+            data.set(argument.buffer, argument.offset);
+            if (argument.end) setDownload(data);
+        });
+
+        alert('다운로드를 시작합니다.');
+        ipcRenderer.send('ReceiveData', { type, key, channelId });
     }
 
     return (
@@ -202,15 +231,25 @@ function App() {
                                             <MyComment>
                                                 <MyComment.Content>
                                                     <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                    {
-                                                        elem.emoticonImg ?
-                                                            <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                            (
-                                                                elem.attachedImg ?
-                                                                    <Image src={elem.attachedImg} /> :
-                                                                    <Comment.Text>{elem.data}</Comment.Text>
-                                                            )
-                                                    }
+                                                    <Comment.Text>
+                                                        {
+                                                            elem.emoticonImg ?
+                                                                <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                                (
+                                                                    elem.attachedImg ?
+                                                                        <Image src={elem.attachedImg} /> :
+                                                                        <div>{elem.data}</div>
+                                                                )
+                                                        }
+                                                        {
+                                                            elem.attachedFileData ?
+                                                                <a onClick={() => downloadFile(
+                                                                    elem.attachedFileData!.type,
+                                                                    elem.attachedFileData!.key,
+                                                                    elem.attachedFileData!.size)}>다운로드</a> :
+                                                                <div />
+                                                        }
+                                                    </Comment.Text>
                                                 </MyComment.Content>
                                             </MyComment>
                                         </ChatWrapper>
@@ -219,6 +258,7 @@ function App() {
                                     return (
                                         <ChatWrapper>
                                             <Comment>
+                                                <Comment.Text>
                                                 {
                                                     elem.senderInfo.profileURL !== '' ?
                                                         <Comment.Avatar src={elem.senderInfo.profileURL}/> :
@@ -227,16 +267,25 @@ function App() {
 
                                                 <Comment.Content>
                                                     <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                    {
-                                                        elem.emoticonImg ?
-                                                            <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                            (
-                                                                elem.attachedImg ?
-                                                                    <Image src={elem.attachedImg} /> :
-                                                                    <Comment.Text>{elem.data}</Comment.Text>
-                                                            )
-                                                    }
-                                                </Comment.Content>
+                                                        {
+                                                            elem.emoticonImg ?
+                                                                <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                                (
+                                                                    elem.attachedImg ?
+                                                                        <Image src={elem.attachedImg} /> :
+                                                                        <div>{elem.data}</div>
+                                                                )
+                                                        }
+                                                        {
+                                                            elem.attachedFileData ?
+                                                                <a onClick={() => downloadFile(
+                                                                    elem.attachedFileData!.type,
+                                                                    elem.attachedFileData!.key,
+                                                                    elem.attachedFileData!.size)}>다운로드</a> :
+                                                                <div />
+                                                        }
+                                                    </Comment.Content>
+                                                </Comment.Text>
                                             </Comment>
                                         </ChatWrapper>
                                     )

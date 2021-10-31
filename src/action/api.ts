@@ -1,4 +1,4 @@
-import {AsyncCommandResult, AuthApiClient, KnownAuthStatusCode, TalkClient, util} from 'node-kakao';
+import {AsyncCommandResult, AuthApiClient, KnownAuthStatusCode, ServiceApiClient, TalkClient, util} from 'node-kakao';
 import { LoginData } from '../util/type';
 import storage from 'electron-json-storage';
 
@@ -6,6 +6,7 @@ export default class API {
     private static instance: AuthApiClient;
     private static CLIENT: TalkClient = new TalkClient();
     private static app: { status: number, success: boolean, result?: LoginData};
+    private static serviceApiClient: ServiceApiClient;
 
     private static Info: { UUID: string, NAME: string } = storage.getSync('info') as { UUID: string , NAME: string };
 
@@ -49,5 +50,14 @@ export default class API {
     public static async SyncAuthApiClient() {
         this.Info = await storage.getSync('info') as { UUID: string , NAME: string };
         this.instance = await AuthApiClient.create(this.Info.NAME, this.Info.UUID);
+    }
+
+    public static async getServiceApiClient() {
+        return this.serviceApiClient || (this.serviceApiClient = await ServiceApiClient.create({
+            userId: this.app.result!.userId,
+            deviceUUID: this.app.result!.deviceUUID,
+            accessToken: this.app.result!.accessToken,
+            refreshToken: this.app.result!.refreshToken
+        }));
     }
 }

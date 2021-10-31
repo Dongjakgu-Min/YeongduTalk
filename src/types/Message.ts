@@ -1,5 +1,6 @@
 import {ChannelInfo} from "./Channel";
 import {Long} from "bson";
+import {FileAttachment} from "node-kakao";
 
 type ChannelStruct = {
     name: string,
@@ -16,7 +17,9 @@ type ChatStruct = {
     }
     data: string,
     emoticonImg?: string,
-    attachedImg?: string
+    attachedImg?: string,
+    attachedFile?: string
+    attachedFileData?: { size: number, key: string, type: number }
 }
 
 type MyProfileStruct = {
