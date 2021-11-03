@@ -27,6 +27,8 @@ const App = () => {
     const history = useHistory();
     const location = useLocation<Record<string, Record<string, unknown>>>();
 
+    ipcRenderer.removeAllListeners('LoginResult');
+
     const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setName(e.target.value);
     }

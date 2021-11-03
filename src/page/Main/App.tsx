@@ -108,6 +108,8 @@ function App() {
         }
     }, [download]);
 
+    ipcRenderer.removeAllListeners('LoginResult');
+    ipcRenderer.removeAllListeners('AlreadyLogin');
     ipcRenderer.removeAllListeners('NewChat');
     ipcRenderer.removeAllListeners('GetMyProfile');
     ipcRenderer.removeAllListeners('GetMyProfileResult');
@@ -143,12 +145,7 @@ function App() {
 
     ipcRenderer.on('GetMyProfileResult', (event, argument: MyProfileStruct) => {
         setProfile(argument);
-    })
-
-    // ipcRenderer.on('ReceiveDataResult', (event, argument: { buffer: Uint8Array, end: boolean, offset: number }) => {
-    //     // download?.data?.set(argument.buffer, argument.offset);
-    //     // if (download && download.isDone) setDownload({ ...download, isDone: argument.end })
-    // });
+    });
 
     const sendMessage = (filePath?: Record<string, unknown>) => {
         ipcRenderer.send('SendMessage', { channelId, message, filePath });
@@ -258,14 +255,13 @@ function App() {
                                     return (
                                         <ChatWrapper>
                                             <Comment>
-                                                <Comment.Text>
                                                 {
                                                     elem.senderInfo.profileURL !== '' ?
                                                         <Comment.Avatar src={elem.senderInfo.profileURL}/> :
                                                         <Comment.Avatar src={noProfile}/>
                                                 }
-
                                                 <Comment.Content>
+                                                    <Comment.Text>
                                                     <Comment.Author>{elem.senderInfo.name}</Comment.Author>
                                                         {
                                                             elem.emoticonImg ?
@@ -284,8 +280,8 @@ function App() {
                                                                     elem.attachedFileData!.size)}>다운로드</a> :
                                                                 <div />
                                                         }
-                                                    </Comment.Content>
-                                                </Comment.Text>
+                                                    </Comment.Text>
+                                                </Comment.Content>
                                             </Comment>
                                         </ChatWrapper>
                                     )

@@ -22,6 +22,8 @@ function App () {
     const history = useHistory();
     const location = useLocation<Record<string, unknown>>();
 
+    ipcRenderer.removeAllListeners('RegisterResult');
+
     const onCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPassCode(e.target.value);
     }
