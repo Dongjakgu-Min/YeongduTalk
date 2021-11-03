@@ -1,10 +1,9 @@
 import API from "./api";
 import {AttachmentApi, ChannelInfo, ChatBuilder, FileAttachment, KnownChatType, TalkChannel} from 'node-kakao';
 import {ChannelStruct, ChatStruct} from "../types/Message";
-import {getEmoticonImageURL, getEmoticonThumbnailURL} from "../util/util";
 import {readFileSync} from "fs";
 import hasha from "hasha";
-import {number} from "prop-types";
+import { getMessageObj } from '../util/message';
 
 const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
     const CLIENT = await API.getClient();
@@ -26,6 +25,7 @@ const ChannelList = async (event: Electron.IpcMainEvent, payload: any) => {
 const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
     const CLIENT = await API.getClient();
     const ChannelList = CLIENT.channelList;
+    const serviceApi = await API.getServiceApiClient();
     let channel: TalkChannel | undefined = undefined;
 
     const log: ChatStruct[] = [];
@@ -41,44 +41,10 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
         if (item.success) {
             for (let chat of item.result) {
                 const userInfo = channel.getUserInfo(chat.sender);
-                const serviceApi = await API.getServiceApiClient();
-                let emoticonImg = undefined;
-                let attachedImg = undefined;
-                let attachedFile = undefined;
-                let attachedFileData = undefined;
 
-                console.log(chat);
+                if (!userInfo) throw new Error('UserInfo Not Found');
 
-                if (chat.type === 20)
-                    emoticonImg = getEmoticonThumbnailURL(chat.attachment?.path as string)
-                else if (chat.type === 12)
-                    emoticonImg = getEmoticonImageURL(chat.attachment?.path as string);
-                else if (chat.type === 2)
-                    attachedImg = chat.attachment?.url as string;
-                else if (chat.type === KnownChatType.FILE) {
-                    const result = await serviceApi.requestSessionURL(chat.attachment?.k as string);
-                    const file = await channel.downloadMediaThumb({ key: chat.attachment?.k as string }, KnownChatType.FILE);
-
-                    if (result.success)
-                        attachedFile = result.result;
-                    if (file.success && chat.attachment)
-                        attachedFileData = { size: chat.attachment.size as number, key: chat.attachment.k as string, type: KnownChatType.FILE }
-                }
-
-                log.push({
-                    channelId: channel.channelId,
-                    senderInfo: {
-                        senderId: chat.sender.userId,
-                        name: userInfo!.nickname,
-                        profileURL: userInfo!.profileURL,
-                        isMine: CLIENT.clientUser.userId.equals(userInfo!.userId)
-                    },
-                    data: chat.text as string,
-                    emoticonImg,
-                    attachedImg,
-                    attachedFile,
-                    attachedFileData
-                });
+                log.push(await getMessageObj(chat, serviceApi, channel, userInfo));
             }
         }
     }
@@ -116,10 +82,22 @@ const sendMessage = async (event: Electron.IpcMainEvent, payload: any) => {
 
         channel?.sendChat(
             new ChatBuilder()
+                .text(filenameArray[filenameArray.length - 1])
                 .attachment(attachRes.result)
                 .attachment(fileAttach)
                 .build(KnownChatType.FILE)
         );
+    }
+
+    if (channel && channel.chatListStore.all()) {
+        await channel.updateAll();
+        const lastChat = await channel.chatListStore.last();
+        const userInfo = channel.getUserInfo(channel.clientUser);
+        const serviceApi = await API.getServiceApiClient();
+
+        if (!lastChat || !userInfo) throw new Error('UserData or LastChat not Found');
+
+        event.reply('NewChat', await getMessageObj(lastChat, serviceApi, channel, userInfo));
     }
 }
 
@@ -138,19 +116,12 @@ const receiveData = async (event: Electron.IpcMainEvent, payload: any) => {
 
     if (channel === undefined) throw Error('Channel Not Found');
 
-    console.log(payload);
-    console.log(type);
-    console.log(key);
-
     const chunk = await channel.downloadMedia({ key }, type);
-    console.log('독수리~오형제~');
     if (!chunk || !chunk.success) {
-        console.log('천하무적~');
         return;
     }
 
     const stream = chunk.result;
-    console.log(stream.size);
 
     while (!stream.done) {
         let offset = stream.readSize;

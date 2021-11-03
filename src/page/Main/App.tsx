@@ -11,6 +11,12 @@ import {bool} from "prop-types";
 
 const ChannelList = styled.div`
   width: 40%;
+  padding: 20px;
+`;
+
+const ChannelListSegment = styled(Segment)`
+  width: 100%;
+  height: 100%;
   overflow: scroll;
   overflow-x: hidden;
 `;
@@ -82,7 +88,7 @@ function App() {
     const [chats, setChats] = useState<ChatStruct[]>([]);
     const [message, setMessage] = useState<string>();
     const [channelId, setChannelId] = useState<Long>();
-    const [download, setDownload] = useState<Uint8Array>();
+    const [download, setDownload] = useState<{ fileName: string, data: Uint8Array }>();
     const [profile, setProfile] = useState<MyProfileStruct>()
     const location = useLocation<Record<string, unknown>>();
     const chatEndRef = useRef<HTMLInputElement>(null);
@@ -103,8 +109,8 @@ function App() {
 
     useEffect(() => {
         if (download) {
-            const blob = new Blob([download], { type: 'application/octet-stream' });
-            saveAs(blob, 'asdf');
+            const blob = new Blob([download.data], { type: 'application/octet-stream' });
+            saveAs(blob, download.fileName);
         }
     }, [download]);
 
@@ -149,19 +155,7 @@ function App() {
 
     const sendMessage = (filePath?: Record<string, unknown>) => {
         ipcRenderer.send('SendMessage', { channelId, message, filePath });
-        const newChat = {
-            channelId,
-            senderInfo: {
-                senderId: profile?.userId,
-                name: profile?.username,
-                profileURL: '',
-                isMine: true
-            },
-            data: message
-        }
-
         setMessage('');
-        setChats([...chats, newChat as ChatStruct])
     }
 
     const sendMsgViaEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -177,25 +171,20 @@ function App() {
         if (e.target.files) {
             sendMessage({
                 filePath: e.target.files[0].path,
-                fileSize: e.target.files[0].size
+                fileSize: e.target.files[0].size,
             });
         } else {
             alert('파일을 선택하지 않았습니다.');
         }
     }
 
-    const downloadFile = (type: number, key: string, size: number) => {
+    const downloadFile = (type: number, key: string, size: number, fileName: string) => {
         const buffer = new ArrayBuffer(size);
         const data = new Uint8Array(buffer);
 
-        console.log(`size is ${size}, data size is ${data.length}`);
-        console.log(data);
-
         ipcRenderer.on('ReceiveDataResult', (event, argument: { buffer: Uint8Array, end: boolean, offset: number }) => {
-            console.log(`offset is : ${argument.offset}`);
-            console.log(`buffer size is : ${argument.buffer.length}`)
             data.set(argument.buffer, argument.offset);
-            if (argument.end) setDownload(data);
+            if (argument.end) setDownload({ data, fileName });
         });
 
         alert('다운로드를 시작합니다.');
@@ -205,6 +194,7 @@ function App() {
     return (
         <Wrapper>
             <ChannelList>
+                <ChannelListSegment>
                     <List divided relaxed>
                         {
                             users.map((elem: ChannelStruct) => {
@@ -216,6 +206,7 @@ function App() {
                             })
                         }
                     </List>
+                </ChannelListSegment>
             </ChannelList>
             <Chatting>
                 <ChattingWindow>
@@ -243,7 +234,9 @@ function App() {
                                                                 <a onClick={() => downloadFile(
                                                                     elem.attachedFileData!.type,
                                                                     elem.attachedFileData!.key,
-                                                                    elem.attachedFileData!.size)}>다운로드</a> :
+                                                                    elem.attachedFileData!.size,
+                                                                    elem.data
+                                                                )}>다운로드</a> :
                                                                 <div />
                                                         }
                                                     </Comment.Text>
@@ -277,7 +270,9 @@ function App() {
                                                                 <a onClick={() => downloadFile(
                                                                     elem.attachedFileData!.type,
                                                                     elem.attachedFileData!.key,
-                                                                    elem.attachedFileData!.size)}>다운로드</a> :
+                                                                    elem.attachedFileData!.size,
+                                                                    elem.data
+                                                                )}>다운로드</a> :
                                                                 <div />
                                                         }
                                                     </Comment.Text>

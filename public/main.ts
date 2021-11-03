@@ -6,7 +6,7 @@ import * as path from 'path';
 
 import API from "../src/action/api";
 import {GetMyProfile} from "../src/action/information";
-import {getEmoticonImageURL, getEmoticonThumbnailURL} from '../src/util/util';
+import {getEmoticonImageURL, getEmoticonThumbnailURL} from '../src/util/emoticon';
 
 let mainWindow: BrowserWindow;
 const CLIENT = API.getClient();
@@ -31,7 +31,6 @@ CLIENT.on('chat', async (data, channel) => {
             break;
         case KnownChatType.FILE:
             attachedFile = data.chat.attachment?.url;
-            console.log(await channel.downloadMedia({ key: data.chat.attachment?.k as string }, KnownChatType.FILE));
             break;
         default: break;
     }
