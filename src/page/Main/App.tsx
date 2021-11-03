@@ -7,11 +7,10 @@ import { saveAs } from 'file-saver';
 
 import {ChatStruct, ChannelStruct, MyProfileStruct} from '../../types/Message';
 import noProfile from '/public/img/user.png';
-import {bool} from "prop-types";
 
 const ChannelList = styled.div`
   width: 40%;
-  padding: 20px;
+  padding: 20px 10px 20px 20px;
 `;
 
 const ChannelListSegment = styled(Segment)`
@@ -21,9 +20,16 @@ const ChannelListSegment = styled(Segment)`
   overflow-x: hidden;
 `;
 
+const ChattingSegment = styled(Segment)`
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
+
 const Chatting = styled.div`
   width: 100%;
   height: 100%;
+  padding: 20px 20px 20px 10px;
 `;
 
 const Wrapper = styled.div`
@@ -43,32 +49,25 @@ const ChatWrapper = styled.div`
 
 const ChattingWindow = styled.div`
   overflow: scroll;
-  height: calc(100% - 100px);
+  height: calc(100% - 80px);
   overflow-x: hidden;
   width: 100%;
-  padding: 30px 30px 15px 30px;
+  padding: 10px;
 `;
 
 const InputArea = styled.div`
   width: 100%;
-  height: 100px;
   display: flex;
-  padding: 20px 20px 20px 20px;
-`
+  padding: 10px 0 0 0;
+`;
 
 const InputForm = styled(Form)`
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 100px);
 `;
 
-const InputFormTextArea = styled(Form.TextArea)`
-  width: 100%
-  //height: 100%;
-`;
-
-const SendButton = styled.div`
-  padding: 0 10px 0 10px;
-  width: 150px;
+const ButtonGroup = styled.div`
+  width: 100px;
+  padding: 0 0 0 20px;
 `;
 
 const Emoticon = styled.img`
@@ -78,6 +77,18 @@ const Emoticon = styled.img`
 
 const Image = styled.img`
     width: 30%;
+`;
+
+const SendButton = styled(Button)`
+  width: 80px;
+`;
+
+const SendBtnGroup = styled(Button.Group)`
+  width: 80px;  
+`;
+
+const SendButtonWrapper = styled.div`
+  margin-bottom: 3px;  
 `;
 
 const electron = window.require('electron');
@@ -163,7 +174,7 @@ function App() {
             sendMessage();
     }
 
-    const onMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const onMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
     };
 
@@ -209,96 +220,101 @@ function App() {
                 </ChannelListSegment>
             </ChannelList>
             <Chatting>
-                <ChattingWindow>
-                    <Comment.Group>
-                        {
-                            chats.map((elem: ChatStruct) => {
-                                if (elem.senderInfo.isMine) {
-                                    return (
-                                        <ChatWrapper>
-                                            <MyComment>
-                                                <MyComment.Content>
-                                                    <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                    <Comment.Text>
-                                                        {
-                                                            elem.emoticonImg ?
-                                                                <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                                (
-                                                                    elem.attachedImg ?
-                                                                        <Image src={elem.attachedImg} /> :
-                                                                        <div>{elem.data}</div>
-                                                                )
-                                                        }
-                                                        {
-                                                            elem.attachedFileData ?
-                                                                <a onClick={() => downloadFile(
-                                                                    elem.attachedFileData!.type,
-                                                                    elem.attachedFileData!.key,
-                                                                    elem.attachedFileData!.size,
-                                                                    elem.data
-                                                                )}>다운로드</a> :
-                                                                <div />
-                                                        }
-                                                    </Comment.Text>
-                                                </MyComment.Content>
-                                            </MyComment>
-                                        </ChatWrapper>
-                                    )
-                                } else {
-                                    return (
-                                        <ChatWrapper>
-                                            <Comment>
-                                                {
-                                                    elem.senderInfo.profileURL !== '' ?
-                                                        <Comment.Avatar src={elem.senderInfo.profileURL}/> :
-                                                        <Comment.Avatar src={noProfile}/>
-                                                }
-                                                <Comment.Content>
-                                                    <Comment.Text>
-                                                    <Comment.Author>{elem.senderInfo.name}</Comment.Author>
-                                                        {
-                                                            elem.emoticonImg ?
-                                                                <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
-                                                                (
-                                                                    elem.attachedImg ?
-                                                                        <Image src={elem.attachedImg} /> :
-                                                                        <div>{elem.data}</div>
-                                                                )
-                                                        }
-                                                        {
-                                                            elem.attachedFileData ?
-                                                                <a onClick={() => downloadFile(
-                                                                    elem.attachedFileData!.type,
-                                                                    elem.attachedFileData!.key,
-                                                                    elem.attachedFileData!.size,
-                                                                    elem.data
-                                                                )}>다운로드</a> :
-                                                                <div />
-                                                        }
-                                                    </Comment.Text>
-                                                </Comment.Content>
-                                            </Comment>
-                                        </ChatWrapper>
-                                    )
-                                }
-                            })
-                        }
-                        <div ref={chatEndRef} />
-                    </Comment.Group>
-                </ChattingWindow>
+                <ChattingSegment>
+                    <ChattingWindow>
+                        <Comment.Group>
+                            {
+                                chats.map((elem: ChatStruct) => {
+                                    if (elem.senderInfo.isMine) {
+                                        return (
+                                            <ChatWrapper>
+                                                <MyComment>
+                                                    <MyComment.Content>
+                                                        <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                        <Comment.Text>
+                                                            {
+                                                                elem.emoticonImg ?
+                                                                    <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                                    (
+                                                                        elem.attachedImg ?
+                                                                            <Image src={elem.attachedImg} /> :
+                                                                            <div>{elem.data}</div>
+                                                                    )
+                                                            }
+                                                            {
+                                                                elem.attachedFileData ?
+                                                                    <a onClick={() => downloadFile(
+                                                                        elem.attachedFileData!.type,
+                                                                        elem.attachedFileData!.key,
+                                                                        elem.attachedFileData!.size,
+                                                                        elem.data
+                                                                    )}>다운로드</a> :
+                                                                    <div />
+                                                            }
+                                                        </Comment.Text>
+                                                    </MyComment.Content>
+                                                </MyComment>
+                                            </ChatWrapper>
+                                        )
+                                    } else {
+                                        return (
+                                            <ChatWrapper>
+                                                <Comment>
+                                                    {
+                                                        elem.senderInfo.profileURL !== '' ?
+                                                            <Comment.Avatar src={elem.senderInfo.profileURL}/> :
+                                                            <Comment.Avatar src={noProfile}/>
+                                                    }
+                                                    <Comment.Content>
+                                                        <Comment.Text>
+                                                        <Comment.Author>{elem.senderInfo.name}</Comment.Author>
+                                                            {
+                                                                elem.emoticonImg ?
+                                                                    <Emoticon src={elem.emoticonImg} alt="카카오 이모티콘" /> :
+                                                                    (
+                                                                        elem.attachedImg ?
+                                                                            <Image src={elem.attachedImg} /> :
+                                                                            <div>{elem.data}</div>
+                                                                    )
+                                                            }
+                                                            {
+                                                                elem.attachedFileData ?
+                                                                    <a onClick={() => downloadFile(
+                                                                        elem.attachedFileData!.type,
+                                                                        elem.attachedFileData!.key,
+                                                                        elem.attachedFileData!.size,
+                                                                        elem.data
+                                                                    )}>다운로드</a> :
+                                                                    <div />
+                                                            }
+                                                        </Comment.Text>
+                                                    </Comment.Content>
+                                                </Comment>
+                                            </ChatWrapper>
+                                        )
+                                    }
+                                })
+                            }
+                            <div ref={chatEndRef} />
+                        </Comment.Group>
+                    </ChattingWindow>
 
                     <InputArea>
                         <InputForm onKeyPress={sendMsgViaEnter} onSubmit={() => sendMessage()}>
-                            <InputFormTextArea onChange={onMessageChange} value={message}/>
+                            <Form.TextArea onChange={onMessageChange} value={message}/>
                         </InputForm>
-                        <SendButton>
-                            <Button>제출</Button>
-                            <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
-                            <input ref={fileRef} type='file' style={{display: 'none'}} onChange={onFileChange} />
-                            <Button icon='star' />
-                        </SendButton>
+                        <input ref={fileRef} type='file' style={{display: 'none'}} onChange={onFileChange} />
+                        <ButtonGroup>
+                            <SendButtonWrapper>
+                                <SendButton>제출</SendButton>
+                            </SendButtonWrapper>
+                            <SendBtnGroup>
+                                <Button onClick={() => fileRef.current?.click()} type='file' icon='upload'/>
+                                <Button icon='star' />
+                            </SendBtnGroup>
+                        </ButtonGroup>
                     </InputArea>
-
+                </ChattingSegment>
             </Chatting>
         </Wrapper>
     )
