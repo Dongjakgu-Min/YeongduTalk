@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain, Menu, Tray} from 'electron';
+import {app, BrowserWindow, ipcMain, Menu, Tray, Notification} from 'electron';
 import {AttachmentApiClient, KnownChatType} from 'node-kakao';
 import {Login, Passcode, RegisterDevice} from "../src/action/deviceRegister";
 import {ChannelList, getChatList, sendMessage, receiveData} from '../src/action/Room';
@@ -19,6 +19,8 @@ CLIENT.on('chat', async (data, channel) => {
     let attachedImg = undefined;
     let attachedFile = undefined;
     if (!sender) return;
+
+    new Notification({ title: sender.nickname, body: data.text }).show();
 
     const app = await API.getApp();
 
