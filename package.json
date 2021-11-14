@@ -8,7 +8,8 @@
     "dev": "webpack-dev-server --mode development --open --hot",
     "build": "webpack --mode production",
     "react-start": "webpack --mode development",
-    "start": "tsc && webpack --mode=development && electron ."
+    "start": "tsc && webpack --mode=development && electron .",
+    "deploy": "electron-packager . --asar"
   },
   "author": "songyw9812@gmail.com",
   "license": "MIT",
@@ -21,9 +22,12 @@
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@types/styled-components": "^5.1.14",
+    "asar": "^3.1.0",
     "babel-loader": "^8.2.2",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.3.0",
+    "electron": "^15.3.1",
+    "electron-packager": "^15.4.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.3.2",
     "style-loader": "^3.3.0",
@@ -38,10 +42,12 @@
     "@types/electron-json-storage": "^4.5.0",
     "@types/file-saver": "^2.0.3",
     "@types/react-router-dom": "^5.3.0",
-    "electron": "^15.0.0",
+    "@types/react-virtualized-auto-sizer": "^1.0.1",
+    "@types/react-window": "^1.8.5",
     "electron-json-storage": "^4.5.0",
     "file-saver": "^2.0.5",
     "hasha": "^5.2.2",
+    "memfs": "^3.3.0",
     "node-kakao": "^4.4.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -49,5 +55,12 @@
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.0.4",
     "styled-components": "^5.3.1"
+  },
+  "build": {
+    "from": "public/img",
+    "filter": [
+      "chat.png",
+      "logo.png"
+    ]
   }
 }

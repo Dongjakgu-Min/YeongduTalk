@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain, Menu, Tray, Notification} from 'electron';
+import {app, BrowserWindow, ipcMain, Menu, Tray, Notification, nativeImage} from 'electron';
 import {AttachmentApiClient, KnownChatType} from 'node-kakao';
 import {Login, Passcode, RegisterDevice} from "../src/action/deviceRegister";
 import {ChannelList, getChatList, sendMessage, receiveData} from '../src/action/Room';
@@ -10,7 +10,6 @@ import {getEmoticonImageURL, getEmoticonThumbnailURL} from '../src/util/emoticon
 
 let mainWindow: BrowserWindow;
 const CLIENT = API.getClient();
-let counter = 0;
 let tray = null;
 
 CLIENT.on('chat', async (data, channel) => {
@@ -60,7 +59,7 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false
         },
-        icon: path.join(process.cwd(), 'public/img/logo.png'),
+        icon: path.join(app.getAppPath(), 'public', 'img', 'logo.png'),
     });
 
     mainWindow.loadFile('dist/index.html');
@@ -68,13 +67,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
-    const menu = Menu.buildFromTemplate([
-        { label: '영두톡 종료', click: () => { app.exit() }},
-    ]);
 
-    tray = new Tray(process.cwd() + '/public/img/chat.png');
-    tray.setToolTip('YeongduTalk')
-    tray.setContextMenu(menu);
+    tray = new Tray(path.join(app.getAppPath(), 'public', 'img', 'chat.png'));
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -85,7 +79,7 @@ app.whenReady().then(() => {
         event.preventDefault();
     });
 
-    tray.on('click', () => {
+    tray.on('double-click', () => {
         mainWindow.show();
     });
     tray.setTitle('영두톡');

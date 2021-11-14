@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import styled from 'styled-components';
 import { useHistory, useLocation } from 'react-router-dom';
 import {Button, Input, Segment} from 'semantic-ui-react';
-import storage from 'electron-json-storage';
-import {Runtime} from "inspector";
 
 const electron = window.require('electron');
 const { ipcRenderer } = electron;

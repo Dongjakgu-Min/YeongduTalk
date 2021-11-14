@@ -49,6 +49,8 @@ const getChatList = async (event: Electron.IpcMainEvent, payload: any) => {
         }
     }
 
+    console.log(log.length);
+
     event.reply('GetChatListResult', log);
 };
 

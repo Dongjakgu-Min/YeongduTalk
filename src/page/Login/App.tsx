@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button, Segment, Input } from 'semantic-ui-react';
 import styled from 'styled-components';
+import Image from '../../../public/img/Background.jpg';
+
 const electron = window.require('electron');
 const { ipcRenderer } = electron;
 
@@ -12,6 +14,13 @@ const Main = styled.div`
   transform: translate(-50%, -50%);
 `;
 
+const Background = styled.div`
+  background-image: url(${Image});
+  background-size: cover;
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+`;
 
 const Form = styled.div`
     margin: 50px 75px 50px 75px;
@@ -48,16 +57,18 @@ const App = () => {
     });
 
     return (
-        <Main>
-            <Segment>
-                <Form>
-                    <h1>로그인</h1>
-                    <Input name="email" onChange={onChangeInput} value={info.email} /><br/>
-                    <Input name="password" type="password" onChange={onChangeInput} value={info.password}/><br/><br/>
-                    <Button onClick={() => send()}>전송</Button>
-                </Form>
-            </Segment>
-        </Main>
+        <Background>
+            <Main>
+                <Segment>
+                    <Form>
+                        <h1>로그인</h1>
+                        <Input name="email" onChange={onChangeInput} value={info.email} /><br/>
+                        <Input name="password" type="password" onChange={onChangeInput} value={info.password}/><br/><br/>
+                        <Button onClick={() => send()}>전송</Button>
+                    </Form>
+                </Segment>
+            </Main>
+        </Background>
     )
 }
 
